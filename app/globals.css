@@ -1,0 +1,450 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --neon-cyan: #00f5ff;
+  --neon-green: #39ff14;
+  --neon-pink: #ff006e;
+  --neon-orange: #ff6b35;
+  --neon-purple: #9d4edd;
+  --neon-yellow: #ffd60a;
+  --void: #0a0a0f;
+  --void-light: #12121a;
+  --void-lighter: #1a1a25;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--void);
+  color: #e5e5e5;
+  font-family: 'IBM Plex Sans', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--void-light);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 245, 255, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 245, 255, 0.5);
+}
+
+/* Neon glow effects */
+.neon-glow {
+  box-shadow: 0 0 5px var(--neon-cyan), 0 0 10px rgba(0, 245, 255, 0.3), 0 0 20px rgba(0, 245, 255, 0.1);
+}
+
+.neon-glow-green {
+  box-shadow: 0 0 5px var(--neon-green), 0 0 10px rgba(57, 255, 20, 0.3), 0 0 20px rgba(57, 255, 20, 0.1);
+}
+
+.neon-glow-pink {
+  box-shadow: 0 0 5px var(--neon-pink), 0 0 10px rgba(255, 0, 110, 0.3), 0 0 20px rgba(255, 0, 110, 0.1);
+}
+
+.neon-glow-orange {
+  box-shadow: 0 0 5px var(--neon-orange), 0 0 10px rgba(255, 107, 53, 0.3), 0 0 20px rgba(255, 107, 53, 0.1);
+}
+
+.neon-text {
+  text-shadow: 0 0 5px var(--neon-cyan), 0 0 10px var(--neon-cyan), 0 0 20px rgba(0, 245, 255, 0.5);
+}
+
+.neon-text-green {
+  text-shadow: 0 0 5px var(--neon-green), 0 0 10px var(--neon-green), 0 0 20px rgba(57, 255, 20, 0.5);
+}
+
+/* Grid background */
+.grid-bg {
+  background-image: 
+    linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Scan line overlay */
+.scan-line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+  animation: scan 4s linear infinite;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+@keyframes scan {
+  0% { top: 0; }
+  100% { top: 100%; }
+}
+
+/* Panel styling */
+.panel {
+  background: linear-gradient(135deg, rgba(18, 18, 26, 0.95) 0%, rgba(10, 10, 15, 0.98) 100%);
+  border: 1px solid rgba(0, 245, 255, 0.15);
+  backdrop-filter: blur(10px);
+}
+
+.panel-header {
+  background: linear-gradient(90deg, rgba(0, 245, 255, 0.1) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(0, 245, 255, 0.2);
+}
+
+/* Telemetry chip */
+.telemetry-chip {
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.15) 0%, rgba(0, 245, 255, 0.05) 100%);
+  border: 1px solid rgba(0, 245, 255, 0.3);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.telemetry-chip.success {
+  background: linear-gradient(135deg, rgba(57, 255, 20, 0.15) 0%, rgba(57, 255, 20, 0.05) 100%);
+  border-color: rgba(57, 255, 20, 0.3);
+  color: #4ade80;
+}
+
+.telemetry-chip.warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
+.telemetry-chip.error {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.05) 100%);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+/* Stage card */
+.stage-card {
+  background: rgba(18, 18, 26, 0.8);
+  border: 1px solid rgba(0, 245, 255, 0.1);
+  border-left: 3px solid rgba(0, 245, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.stage-card.active {
+  border-left-color: var(--neon-cyan);
+  background: rgba(0, 245, 255, 0.05);
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.1);
+}
+
+.stage-card.completed {
+  border-left-color: var(--neon-green);
+}
+
+.stage-card.error {
+  border-left-color: #ef4444;
+}
+
+.stage-card.warning {
+  border-left-color: #f59e0b;
+}
+
+/* Log entry styling */
+.log-entry {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  padding: 4px 8px;
+  border-left: 2px solid transparent;
+}
+
+.log-entry.info {
+  border-left-color: var(--neon-cyan);
+}
+
+.log-entry.warn {
+  border-left-color: var(--neon-orange);
+  background: rgba(255, 107, 53, 0.05);
+}
+
+.log-entry.error {
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.log-entry.debug {
+  border-left-color: rgba(156, 163, 175, 0.5);
+  opacity: 0.7;
+}
+
+/* JSON viewer */
+.json-viewer {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  line-height: 1.6;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  padding: 12px;
+  overflow-x: auto;
+}
+
+.json-key {
+  color: var(--neon-cyan);
+}
+
+.json-string {
+  color: var(--neon-green);
+}
+
+.json-number {
+  color: var(--neon-orange);
+}
+
+.json-boolean {
+  color: var(--neon-purple);
+}
+
+.json-null {
+  color: rgba(156, 163, 175, 0.7);
+}
+
+/* Button styles */
+.btn-primary {
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.2) 0%, rgba(0, 245, 255, 0.1) 100%);
+  border: 1px solid rgba(0, 245, 255, 0.4);
+  color: var(--neon-cyan);
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.3) 0%, rgba(0, 245, 255, 0.15) 100%);
+  box-shadow: 0 0 15px rgba(0, 245, 255, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Input styles */
+.input-field {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 245, 255, 0.2);
+  color: #e5e5e5;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.2);
+}
+
+/* Tab styling */
+.tab-button {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 8px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-button:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.tab-button.active {
+  color: var(--neon-cyan);
+  border-bottom-color: var(--neon-cyan);
+}
+
+/* Rule DSL styling */
+.dsl-block {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 245, 255, 0.1);
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
+.dsl-keyword {
+  color: var(--neon-pink);
+  font-weight: 600;
+}
+
+.dsl-operator {
+  color: var(--neon-orange);
+}
+
+.dsl-value {
+  color: var(--neon-green);
+}
+
+.dsl-field {
+  color: var(--neon-cyan);
+}
+
+/* Progress indicator */
+.progress-bar {
+  height: 2px;
+  background: rgba(0, 245, 255, 0.2);
+  overflow: hidden;
+  border-radius: 1px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+  transition: width 0.3s ease;
+}
+
+/* Connector line between stages */
+.stage-connector {
+  width: 2px;
+  background: linear-gradient(180deg, var(--neon-cyan), transparent);
+  margin-left: 11px;
+  min-height: 20px;
+}
+
+.stage-connector.completed {
+  background: linear-gradient(180deg, var(--neon-green), rgba(57, 255, 20, 0.3));
+}
+
+/* Hover tooltip */
+.tooltip {
+  position: relative;
+}
+
+.tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(0, 245, 255, 0.3);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.tooltip:hover::after {
+  opacity: 1;
+}
+
+/* Diff highlighting */
+.diff-add {
+  background: rgba(57, 255, 20, 0.15);
+  color: var(--neon-green);
+}
+
+.diff-remove {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  text-decoration: line-through;
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulseRing {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease forwards;
+}
+
+/* Status indicator */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  position: relative;
+}
+
+.status-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  animation: pulseRing 1.5s ease-out infinite;
+}
+
+.status-dot.active {
+  background: var(--neon-cyan);
+}
+
+.status-dot.active::after {
+  background: var(--neon-cyan);
+}
+
+.status-dot.success {
+  background: var(--neon-green);
+}
+
+.status-dot.success::after {
+  background: var(--neon-green);
+}
+
+.status-dot.error {
+  background: #ef4444;
+}
+
+.status-dot.error::after {
+  background: #ef4444;
+}
+
+.status-dot.warning {
+  background: #f59e0b;
+}
+
+.status-dot.warning::after {
+  background: #f59e0b;
+}
