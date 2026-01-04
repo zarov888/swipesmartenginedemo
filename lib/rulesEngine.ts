@@ -190,7 +190,7 @@ function shouldApplyModifier(rule: Rule, token: Token): boolean {
   const action = rule.action;
   if (!action.targetTokenProperty) return true;
 
-  const tokenValue = (token as Record<string, unknown>)[action.targetTokenProperty];
+const tokenValue = (token as unknown as Record<string, unknown>)[action.targetTokenProperty];
   const targetValue = action.targetPropertyValue;
 
   if (typeof targetValue === 'object' && targetValue !== null) {
