@@ -1,6 +1,15 @@
+import { PolicyVersion, Rule } from './types';
 import { PolicyVersion, PolicyRegistry, Rule } from './types';
 import { hashString } from './prng';
 import { sampleRules } from './mockData';
+
+export interface PolicyRegistry {
+  currentVersion: string;
+  pinnedVersion?: string;
+  versions: PolicyVersion[];
+  lastFetchedAt: number;
+}
+
 
 // Generate signature hash from rules
 function generateSignature(rules: Rule[]): string {
