@@ -381,3 +381,10 @@ export const SCORING_GLOSSARY = {
     formula: 'Σ(risk factors) normalized to 0-1',
   },
 };
+
+export interface PolicyRegistry {
+  currentVersion: string;
+  pinnedVersion?: string;
+  versions: PolicyVersion[];
+  lastFetchedAt: number;
+}
