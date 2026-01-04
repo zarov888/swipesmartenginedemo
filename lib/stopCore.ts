@@ -253,7 +253,11 @@ export class STOPEngine {
       };
       
       this.log(approved ? 'info' : 'warn', 'Authorization Gateway', approved ? `Approved: ${this.authResult.authCode}` : 'Declined');
-      return { inputs: { declineProbability: declineProb }, outputs: this.authResult };
+  return {
+  inputs: { declineProbability: declineProb } as Record<string, unknown>,
+  outputs: this.authResult as unknown as Record<string, unknown>,
+};
+
     }, onStageComplete);
 
     const finalToken = isDRT && this.drtResolution ? this.drtResolution.selectedChild : selectedToken;
