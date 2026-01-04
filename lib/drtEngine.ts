@@ -40,7 +40,7 @@ export function resolveDRT(
 
       if (scoringResult.topCandidate) {
         selectedChild = childTokens.find(c => c.id === scoringResult.topCandidate!.tokenId)!;
-        resolutionReason = `Optimal score: ${scoringResult.topCandidate.totalScore.toFixed(2)}`;
+        resolutionReason = `Optimal score: ${scoringResult.topCandidate.finalScore.toFixed(2)}`;
       } else {
         // Fallback to first eligible
         selectedChild = childTokens[0];
