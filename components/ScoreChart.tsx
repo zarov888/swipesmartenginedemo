@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { TrendingUp, CreditCard, Wallet, Shield, Check } from 'lucide-react';
 import { ScoreBreakdown } from '@/lib/types';
 
 interface ScoreChartProps {
@@ -15,9 +16,15 @@ export default function ScoreChart({ scores, selectedTokenId }: ScoreChartProps)
   if (eligibleScores.length === 0) return null;
 
   return (
-    <div className="bg-void-light border border-gray-800 rounded-lg p-4">
-      <h3 className="text-sm font-semibold text-white mb-4">Score Comparison</h3>
-      <div className="space-y-3">
+    <div className="bg-surface-50 rounded-xl border border-white/10 overflow-hidden">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-white/5">
+        <h3 className="text-sm font-semibold text-white">Token Comparison</h3>
+        <p className="text-xs text-text-secondary mt-0.5">Ranked by final weighted score</p>
+      </div>
+
+      {/* Score bars */}
+      <div className="p-4 space-y-4">
         {eligibleScores
           .sort((a, b) => b.finalScore - a.finalScore)
           .map((score, idx) => (
@@ -32,24 +39,23 @@ export default function ScoreChart({ scores, selectedTokenId }: ScoreChartProps)
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-gray-800">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm bg-neon-green" />
-          <span className="text-[10px] text-gray-500">Rewards</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm bg-neon-cyan" />
-          <span className="text-[10px] text-gray-500">Credit</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm bg-neon-orange" />
-          <span className="text-[10px] text-gray-500">Cashflow</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm bg-neon-pink" />
-          <span className="text-[10px] text-gray-500">Risk</span>
+      <div className="px-4 py-3 border-t border-white/5 bg-black/20">
+        <div className="flex flex-wrap items-center gap-4">
+          <LegendItem icon={TrendingUp} label="Rewards" color="text-accent-green" />
+          <LegendItem icon={CreditCard} label="Credit" color="text-accent-teal" />
+          <LegendItem icon={Wallet} label="Cashflow" color="text-accent-orange" />
+          <LegendItem icon={Shield} label="Risk" color="text-accent-pink" />
         </div>
       </div>
+    </div>
+  );
+}
+
+function LegendItem({ icon: Icon, label, color }: { icon: typeof TrendingUp; label: string; color: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <Icon className={`w-3 h-3 ${color}`} />
+      <span className="text-[11px] text-text-secondary">{label}</span>
     </div>
   );
 }
@@ -66,120 +72,174 @@ function ScoreBar({
   rank: number;
 }) {
   const totalWidth = (score.finalScore / maxScore) * 100;
-  const rewards = score.subscores.rewards.weighted;
-  const credit = score.subscores.credit.weighted;
-  const cashflow = score.subscores.cashflow.weighted;
-  const risk = score.subscores.risk.weighted;
-  const total = rewards + credit + cashflow + risk;
 
-  const getPercent = (val: number) => total > 0 ? (val / score.finalScore) * totalWidth : 0;
+  // Calculate segment widths based on weighted contributions
+  const total = score.subscores.rewards.weighted +
+    score.subscores.credit.weighted +
+    score.subscores.cashflow.weighted +
+    score.subscores.risk.weighted;
+
+  const getSegmentWidth = (weighted: number) => {
+    if (total === 0) return 0;
+    return (weighted / score.finalScore) * totalWidth;
+  };
 
   return (
-    <div className={`${isSelected ? 'scale-[1.02]' : ''} transition-transform`}>
-      <div className="flex items-center justify-between mb-1">
+    <div className={`transition-all duration-200 ${isSelected ? 'scale-[1.01]' : ''}`}>
+      {/* Token info row */}
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-            rank === 1 ? 'bg-neon-green/20 text-neon-green' : 'bg-gray-800 text-gray-500'
-          }`}>
+          <span className={`
+            w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold
+            ${rank === 1 ? 'bg-accent-green/20 text-accent-green' : 'bg-white/5 text-text-tertiary'}
+          `}>
             {rank}
           </span>
-          <span className={`text-sm truncate max-w-[120px] ${
-            isSelected ? 'text-neon-green font-semibold' : 'text-gray-300'
-          }`}>
-            {score.tokenName}
-          </span>
-          {isSelected && (
-            <span className="text-[10px] bg-neon-green/20 text-neon-green px-1.5 py-0.5 rounded">
-              SELECTED
+          <div className="flex items-center gap-2">
+            <span className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-text-secondary'}`}>
+              {score.tokenName}
             </span>
-          )}
+            {isSelected && (
+              <span className="flex items-center gap-1 text-[10px] bg-accent-green/20 text-accent-green px-2 py-0.5 rounded-full">
+                <Check className="w-3 h-3" />
+                Selected
+              </span>
+            )}
+          </div>
         </div>
-        <span className={`text-sm font-mono font-bold ${
-          isSelected ? 'text-neon-green' : 'text-white'
-        }`}>
-          {score.finalScore.toFixed(1)}
-        </span>
+        <div className="text-right">
+          <span className={`text-sm font-mono font-bold ${isSelected ? 'text-accent-green' : 'text-white'}`}>
+            {score.finalScore.toFixed(1)}
+          </span>
+          <span className="text-[10px] text-text-tertiary ml-1">/ 100</span>
+        </div>
       </div>
 
       {/* Stacked bar */}
-      <div className="h-6 bg-gray-900 rounded-full overflow-hidden relative">
+      <div className="h-8 bg-black/30 rounded-lg overflow-hidden relative">
         <motion.div
           className="absolute inset-y-0 left-0 flex"
           initial={{ width: 0 }}
           animate={{ width: `${totalWidth}%` }}
-          transition={{ duration: 0.5, delay: rank * 0.1 }}
+          transition={{ duration: 0.5, delay: rank * 0.08 }}
         >
           <div
-            className="h-full bg-neon-green"
-            style={{ width: `${getPercent(rewards)}%` }}
+            className="h-full bg-accent-green"
+            style={{ width: `${getSegmentWidth(score.subscores.rewards.weighted)}%` }}
           />
           <div
-            className="h-full bg-neon-cyan"
-            style={{ width: `${getPercent(credit)}%` }}
+            className="h-full bg-accent-teal"
+            style={{ width: `${getSegmentWidth(score.subscores.credit.weighted)}%` }}
           />
           <div
-            className="h-full bg-neon-orange"
-            style={{ width: `${getPercent(cashflow)}%` }}
+            className="h-full bg-accent-orange"
+            style={{ width: `${getSegmentWidth(score.subscores.cashflow.weighted)}%` }}
           />
           <div
-            className="h-full bg-neon-pink"
-            style={{ width: `${getPercent(risk)}%` }}
+            className="h-full bg-accent-pink"
+            style={{ width: `${getSegmentWidth(score.subscores.risk.weighted)}%` }}
           />
         </motion.div>
 
-        {/* Bonuses/Penalties indicator */}
-        {(score.totalBonuses > 0 || score.totalPenalties > 0) && (
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            {score.totalBonuses > 0 && (
-              <span className="text-[10px] text-neon-green font-mono">+{score.totalBonuses.toFixed(0)}</span>
-            )}
-            {score.totalPenalties > 0 && (
-              <span className="text-[10px] text-error-red font-mono">-{score.totalPenalties.toFixed(0)}</span>
-            )}
+        {/* Score labels inside bar */}
+        <div className="absolute inset-0 flex items-center justify-between px-3 pointer-events-none">
+          <div className="flex items-center gap-3 text-[10px] font-mono text-white/80">
+            <span>{score.subscores.rewards.weighted.toFixed(1)}</span>
+            <span>{score.subscores.credit.weighted.toFixed(1)}</span>
+            <span>{score.subscores.cashflow.weighted.toFixed(1)}</span>
+            <span>{score.subscores.risk.weighted.toFixed(1)}</span>
           </div>
-        )}
+          {(score.totalBonuses > 0 || score.totalPenalties > 0) && (
+            <div className="flex items-center gap-1 text-[10px] font-mono">
+              {score.totalBonuses > 0 && (
+                <span className="text-accent-green">+{score.totalBonuses.toFixed(0)}</span>
+              )}
+              {score.totalPenalties > 0 && (
+                <span className="text-error-red">-{score.totalPenalties.toFixed(0)}</span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Subscore breakdown on hover/always for selected */}
+      {/* Expanded details for selected token */}
       {isSelected && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="mt-2 grid grid-cols-4 gap-2 text-center"
+          className="mt-3 grid grid-cols-4 gap-2"
         >
-          <SubScore label="Rewards" raw={score.subscores.rewards.raw} weighted={rewards} color="green" />
-          <SubScore label="Credit" raw={score.subscores.credit.raw} weighted={credit} color="cyan" />
-          <SubScore label="Cashflow" raw={score.subscores.cashflow.raw} weighted={cashflow} color="orange" />
-          <SubScore label="Risk" raw={score.subscores.risk.raw} weighted={risk} color="pink" />
+          <SubScoreCard
+            icon={TrendingUp}
+            label="Rewards"
+            raw={score.subscores.rewards.raw}
+            weighted={score.subscores.rewards.weighted}
+            weight={score.subscores.rewards.weight}
+            color="green"
+          />
+          <SubScoreCard
+            icon={CreditCard}
+            label="Credit"
+            raw={score.subscores.credit.raw}
+            weighted={score.subscores.credit.weighted}
+            weight={score.subscores.credit.weight}
+            color="teal"
+          />
+          <SubScoreCard
+            icon={Wallet}
+            label="Cashflow"
+            raw={score.subscores.cashflow.raw}
+            weighted={score.subscores.cashflow.weighted}
+            weight={score.subscores.cashflow.weight}
+            color="orange"
+          />
+          <SubScoreCard
+            icon={Shield}
+            label="Risk"
+            raw={score.subscores.risk.raw}
+            weighted={score.subscores.risk.weighted}
+            weight={score.subscores.risk.weight}
+            color="pink"
+          />
         </motion.div>
       )}
     </div>
   );
 }
 
-function SubScore({
+function SubScoreCard({
+  icon: Icon,
   label,
   raw,
   weighted,
+  weight,
   color,
 }: {
+  icon: typeof TrendingUp;
   label: string;
   raw: number;
   weighted: number;
-  color: string;
+  weight: number;
+  color: 'green' | 'teal' | 'orange' | 'pink';
 }) {
-  const colorClasses: Record<string, string> = {
-    green: 'border-neon-green/30 text-neon-green',
-    cyan: 'border-neon-cyan/30 text-neon-cyan',
-    orange: 'border-neon-orange/30 text-neon-orange',
-    pink: 'border-neon-pink/30 text-neon-pink',
+  const colorClasses = {
+    green: 'border-accent-green/20 bg-accent-green/5 text-accent-green',
+    teal: 'border-accent-teal/20 bg-accent-teal/5 text-accent-teal',
+    orange: 'border-accent-orange/20 bg-accent-orange/5 text-accent-orange',
+    pink: 'border-accent-pink/20 bg-accent-pink/5 text-accent-pink',
   };
 
   return (
-    <div className={`p-1.5 rounded border ${colorClasses[color]} bg-void`}>
-      <div className="text-[10px] text-gray-500">{label}</div>
-      <div className="text-sm font-mono font-bold">{weighted.toFixed(1)}</div>
-      <div className="text-[9px] text-gray-600">raw: {raw.toFixed(0)}</div>
+    <div className={`p-2 rounded-lg border ${colorClasses[color]}`}>
+      <div className="flex items-center gap-1 mb-1">
+        <Icon className="w-3 h-3" />
+        <span className="text-[10px] font-medium truncate">{label}</span>
+      </div>
+      <div className="text-lg font-mono font-bold">{weighted.toFixed(1)}</div>
+      <div className="flex items-center justify-between text-[9px] text-text-tertiary mt-0.5">
+        <span>raw: {raw.toFixed(0)}</span>
+        <span>{(weight * 100).toFixed(0)}%</span>
+      </div>
     </div>
   );
 }

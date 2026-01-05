@@ -11,6 +11,7 @@ import DiffPanel from '@/components/DiffPanel';
 import DecisionFlow from '@/components/DecisionFlow';
 import ScoreChart from '@/components/ScoreChart';
 import GuidedTour, { TourTrigger } from '@/components/GuidedTour';
+import ScoringExplainer from '@/components/ScoringExplainer';
 
 import { TransactionContext, UserProfile, StageResult, TraceData, AuditRecord, LogEntry, DiffReport, RuleEvaluationResult, SensitivityResult, SelectionMethod } from '@/lib/types';
 import { STOPEngine, SpeedMode } from '@/lib/stopCore';
@@ -318,6 +319,16 @@ export default function Home() {
             {auditRecord && auditRecord.scoreBreakdown.length > 0 && (
               <div className="mb-4">
                 <ScoreChart
+                  scores={auditRecord.scoreBreakdown}
+                  selectedTokenId={auditRecord.selectedRoute}
+                />
+              </div>
+            )}
+
+            {/* Scoring Explainer */}
+            {auditRecord && auditRecord.scoreBreakdown.length > 0 && (
+              <div className="mb-4">
+                <ScoringExplainer
                   scores={auditRecord.scoreBreakdown}
                   selectedTokenId={auditRecord.selectedRoute}
                 />
