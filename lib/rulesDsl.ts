@@ -31,9 +31,10 @@ function compileCondition(condition: RuleCondition): (ctx: TransactionContext, t
 // Resolve field value from context, token, or user
 function resolveFieldValue(field: string, ctx: TransactionContext, token: Token, user: UserProfile): unknown {
   // Context fields
-if (typeof ctx === 'object' && ctx !== null && Object.prototype.hasOwnProperty.call(ctx, field)) {
-  return (ctx as unknown as Record<string, unknown>)[field];
-}
+  if (field in ctx) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (ctx as any)[field];
+  }
 
   // Special computed fields
   switch (field) {
@@ -76,8 +77,9 @@ if (typeof ctx === 'object' && ctx !== null && Object.prototype.hasOwnProperty.c
 
     default:
       // Try token fields
-      if (typeof token === 'object' && token !== null && Object.prototype.hasOwnProperty.call(token, field)) {
-        return (token as unknown as Record<string, unknown>)[field];
+      if (field in token) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (token as any)[field];
       }
 
       // Handle nested fields like rewardsByCategory.dining
