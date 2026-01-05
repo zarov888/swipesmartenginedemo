@@ -27,9 +27,12 @@ export interface PipelineResult {
 
 export type StageCallback = (stageResult: StageResult, stageIndex: number) => void;
 
+export type SpeedMode = 'normal' | 'fast' | 'turbo';
+
 export class STOPEngine {
   private prng: PRNG;
   private seed: number;
+  private speedMode: SpeedMode = 'normal';
   private pipelineStartTime: number = 0;
   private currentOffset: number = 0;
   private stageLogs: LogEntry[] = [];
@@ -48,9 +51,14 @@ export class STOPEngine {
   private authResult: AuthorizationResult | null = null;
   private policyCacheHit: boolean = false;
 
-  constructor(seed?: number) {
+  constructor(seed?: number, speedMode: SpeedMode = 'normal') {
     this.seed = seed ?? generateSeed();
     this.prng = new PRNG(this.seed);
+    this.speedMode = speedMode;
+  }
+
+  setSpeedMode(mode: SpeedMode): void {
+    this.speedMode = mode;
   }
 
   getSeed(): number { return this.seed; }
@@ -127,7 +135,10 @@ export class STOPEngine {
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, Math.max(1, ms / 8)));
+    // Speed multipliers: normal=1/8, fast=1/32, turbo=instant
+    const divisor = this.speedMode === 'turbo' ? Infinity : this.speedMode === 'fast' ? 32 : 8;
+    const delay = divisor === Infinity ? 0 : Math.max(1, ms / divisor);
+    return new Promise(resolve => setTimeout(resolve, delay));
   }
 
   async runPipeline(inputContext: TransactionContext, user: UserProfile, onStageComplete?: StageCallback): Promise<PipelineResult> {

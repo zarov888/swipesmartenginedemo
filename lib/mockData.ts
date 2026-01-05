@@ -290,6 +290,27 @@ export const scenarios: Scenario[] = [
     expectedOutcome: 'Signup bonus rule boosts Chase Sapphire (+15). May win over cards with higher base rewards.',
     context: { amount: 350.00, currency: 'USD', merchant: 'Best Buy', mcc: 5732, category: 'electronics', country: 'US', walletType: 'samsung_pay', isInPerson: true, riskFlags: [] },
   },
+  {
+    id: 'scenario_streaming',
+    name: '📺 Streaming Service',
+    description: 'Monthly streaming subscription renewal',
+    expectedOutcome: 'Optimizer picks card with best streaming rewards. Chase Sapphire (2x) or Blue Cash Preferred (6x).',
+    context: { amount: 15.99, currency: 'USD', merchant: 'Netflix', mcc: 4899, category: 'streaming', country: 'US', walletType: 'browser', isInPerson: false, riskFlags: [] },
+  },
+  {
+    id: 'scenario_large_purchase',
+    name: '💎 Large Purchase',
+    description: 'High-value electronics purchase testing utilization limits',
+    expectedOutcome: 'May exclude cards that would exceed 30% utilization threshold. Tests credit health scoring.',
+    context: { amount: 1899.00, currency: 'USD', merchant: 'Apple Store', mcc: 5732, category: 'electronics', country: 'US', walletType: 'apple_pay', isInPerson: true, riskFlags: ['high_amount'] },
+  },
+  {
+    id: 'scenario_drt_test',
+    name: '🔀 DRT Selection',
+    description: 'Tests Dynamic Routing Token child selection',
+    expectedOutcome: 'DRT resolves to best child card based on routing strategy (optimal_score picks highest scoring child).',
+    context: { amount: 275.00, currency: 'USD', merchant: 'Marriott Hotels', mcc: 7011, category: 'travel', country: 'US', walletType: 'browser', isInPerson: false, riskFlags: [] },
+  },
 ];
 
 export function getDefaultContext(): TransactionContext {

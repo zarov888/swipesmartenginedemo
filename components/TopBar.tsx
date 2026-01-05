@@ -1,8 +1,9 @@
 'use client';
 
-import { Play, Pause, SkipForward, RefreshCw, Repeat, Download, FileJson, Zap } from 'lucide-react';
+import { Play, Pause, SkipForward, RefreshCw, Repeat, Download, FileJson, Zap, Gauge } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { SelectionMethod } from '@/lib/types';
+import type { SpeedMode } from '@/lib/stopCore';
 
 interface TopBarProps {
   correlationId: string;
@@ -18,6 +19,8 @@ interface TopBarProps {
   selectionMethod: SelectionMethod | null;
   isRunning: boolean;
   isPaused: boolean;
+  speedMode: SpeedMode;
+  onSpeedModeChange: (mode: SpeedMode) => void;
   onRun: () => void;
   onStep: () => void;
   onPause: () => void;
@@ -30,8 +33,15 @@ interface TopBarProps {
 export default function TopBar({
   correlationId, seed, policyVersion, policySignature, policyCacheHit, isPinned,
   totalLatency, authResult, authProbability, selectedRoute, selectionMethod,
-  isRunning, isPaused, onRun, onStep, onPause, onReplay, onNewSeed, onExportTrace, onExportAudit,
+  isRunning, isPaused, speedMode, onSpeedModeChange, onRun, onStep, onPause, onReplay, onNewSeed, onExportTrace, onExportAudit,
 }: TopBarProps) {
+  const speedModes: SpeedMode[] = ['normal', 'fast', 'turbo'];
+  const speedLabels: Record<SpeedMode, string> = { normal: '1x', fast: '4x', turbo: 'MAX' };
+  const speedColors: Record<SpeedMode, string> = {
+    normal: 'text-gray-400',
+    fast: 'text-neon-cyan',
+    turbo: 'text-neon-green'
+  };
   const selectionLabel = selectionMethod
     ? selectionMethod.type === 'FORCED'
       ? `FORCED by ${selectionMethod.ruleLabel}`
@@ -68,6 +78,28 @@ export default function TopBar({
           <button onClick={onNewSeed} className="btn-primary px-2.5 py-1 rounded flex items-center gap-1 text-xs font-mono">
             <RefreshCw className="w-3.5 h-3.5" /> New Seed
           </button>
+          <div className="w-px h-5 bg-gray-700 mx-1" />
+          {/* Speed Mode Toggle */}
+          <div className="flex items-center gap-1 px-2 py-1 rounded bg-void border border-gray-700">
+            <Gauge className={`w-3.5 h-3.5 ${speedColors[speedMode]}`} />
+            {speedModes.map((mode) => (
+              <button
+                key={mode}
+                onClick={() => onSpeedModeChange(mode)}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all ${
+                  speedMode === mode
+                    ? mode === 'turbo'
+                      ? 'bg-neon-green/20 text-neon-green border border-neon-green/50'
+                      : mode === 'fast'
+                      ? 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/50'
+                      : 'bg-gray-700 text-white border border-gray-600'
+                    : 'text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                {speedLabels[mode]}
+              </button>
+            ))}
+          </div>
           <div className="w-px h-5 bg-gray-700 mx-1" />
           <button onClick={onExportTrace} className="btn-primary px-2.5 py-1 rounded flex items-center gap-1 text-xs font-mono">
             <Download className="w-3.5 h-3.5" /> Trace

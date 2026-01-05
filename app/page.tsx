@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import TopBar from '@/components/TopBar';
 import InputPanel from '@/components/InputPanel';
@@ -10,7 +10,7 @@ import RulesDock from '@/components/RulesDock';
 import DiffPanel from '@/components/DiffPanel';
 
 import { TransactionContext, UserProfile, StageResult, TraceData, AuditRecord, LogEntry, DiffReport, RuleEvaluationResult, SensitivityResult, SelectionMethod } from '@/lib/types';
-import { STOPEngine } from '@/lib/stopCore';
+import { STOPEngine, SpeedMode } from '@/lib/stopCore';
 import { generateSeed } from '@/lib/prng';
 import { sampleUser, scenarios, getDefaultContext } from '@/lib/mockData';
 import { getActivePolicy, isPolicyPinned } from '@/lib/policyRegistry';
@@ -23,6 +23,7 @@ export default function Home() {
 
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [speedMode, setSpeedMode] = useState<SpeedMode>('normal');
   const [currentStageIndex, setCurrentStageIndex] = useState(-1);
   const [stageResults, setStageResults] = useState<StageResult[]>([]);
   const [rulesDockExpanded, setRulesDockExpanded] = useState(false);
@@ -78,7 +79,7 @@ export default function Home() {
     setRuleEvaluations([]);
     setSensitivity([]);
 
-    const engine = new STOPEngine(seed);
+    const engine = new STOPEngine(seed, speedMode);
     engineRef.current = engine;
     setCorrelationId(engine.getCorrelationId());
 
@@ -130,7 +131,7 @@ export default function Home() {
       setIsRunning(false);
       setCurrentStageIndex(-1);
     }
-  }, [seed, context, user, isRunning, isPaused, auditRecord, previousRun]);
+  }, [seed, context, user, isRunning, isPaused, auditRecord, previousRun, speedMode]);
 
   const handleReplay = useCallback(() => { runPipeline(); }, [runPipeline]);
 
@@ -162,6 +163,52 @@ export default function Home() {
     console.log('Toggle rule:', ruleId);
   }, []);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      switch (e.key.toLowerCase()) {
+        case ' ':
+        case 'enter':
+          e.preventDefault();
+          if (!isRunning) runPipeline();
+          break;
+        case 'r':
+          e.preventDefault();
+          handleReplay();
+          break;
+        case 'n':
+          e.preventDefault();
+          handleNewSeed();
+          break;
+        case '1':
+          setSpeedMode('normal');
+          break;
+        case '2':
+          setSpeedMode('fast');
+          break;
+        case '3':
+          setSpeedMode('turbo');
+          break;
+        case 'escape':
+          setShowDiff(false);
+          setRulesDockExpanded(false);
+          break;
+        case 't':
+          handleExportTrace();
+          break;
+        case 'a':
+          handleExportAudit();
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isRunning, runPipeline, handleReplay, handleNewSeed, handleExportTrace, handleExportAudit]);
+
   return (
     <div className="h-screen flex flex-col bg-void grid-bg overflow-hidden">
       <TopBar
@@ -178,6 +225,8 @@ export default function Home() {
         selectionMethod={selectionMethod}
         isRunning={isRunning}
         isPaused={isPaused}
+        speedMode={speedMode}
+        onSpeedModeChange={setSpeedMode}
         onRun={runPipeline}
         onStep={() => {}}
         onPause={() => setIsPaused(!isPaused)}
