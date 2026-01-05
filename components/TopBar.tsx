@@ -1,6 +1,7 @@
 'use client';
 
-import { Play, Pause, SkipForward, RefreshCw, Repeat, Download, FileJson, Zap, Gauge } from 'lucide-react';
+import { Play, Pause, SkipForward, RefreshCw, Repeat, Download, FileJson, Zap, Gauge, Info } from 'lucide-react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { SelectionMethod } from '@/lib/types';
 import type { SpeedMode } from '@/lib/stopCore';
@@ -55,8 +56,8 @@ export default function TopBar({
         <div className="flex items-center gap-3">
           <Zap className="w-6 h-6 text-neon-cyan" />
           <div>
-            <h1 className="font-display text-lg font-bold text-neon-cyan neon-text">STOP Engine Lab</h1>
-            <span className="text-[10px] text-gray-500 font-mono">Audit-grade routing execution viewer (deterministic replay + full trace)</span>
+            <h1 className="font-display text-lg font-bold text-neon-cyan neon-text">SwipeSmart</h1>
+            <span className="text-[10px] text-gray-500 font-mono">Intelligent payment routing engine with deterministic replay</span>
           </div>
         </div>
 
@@ -107,6 +108,10 @@ export default function TopBar({
           <button onClick={onExportAudit} className="btn-primary px-2.5 py-1 rounded flex items-center gap-1 text-xs font-mono">
             <FileJson className="w-3.5 h-3.5" /> Audit
           </button>
+          <div className="w-px h-5 bg-gray-700 mx-1" />
+          <Link href="/about" className="btn-primary px-2.5 py-1 rounded flex items-center gap-1 text-xs font-mono">
+            <Info className="w-3.5 h-3.5" /> About
+          </Link>
         </div>
       </div>
 
