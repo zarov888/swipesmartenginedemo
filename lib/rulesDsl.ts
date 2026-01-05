@@ -31,9 +31,9 @@ function compileCondition(condition: RuleCondition): (ctx: TransactionContext, t
 // Resolve field value from context, token, or user
 function resolveFieldValue(field: string, ctx: TransactionContext, token: Token, user: UserProfile): unknown {
   // Context fields
-  if (field in ctx) {
-    return (ctx as Record<string, unknown>)[field];
-  }
+if (typeof ctx === 'object' && ctx !== null && Object.prototype.hasOwnProperty.call(ctx, field)) {
+  return (ctx as unknown as Record<string, unknown>)[field];
+}
 
   // Special computed fields
   switch (field) {
@@ -76,8 +76,8 @@ function resolveFieldValue(field: string, ctx: TransactionContext, token: Token,
 
     default:
       // Try token fields
-      if (field in token) {
-        return (token as Record<string, unknown>)[field];
+      if (typeof token === 'object' && token !== null && Object.prototype.hasOwnProperty.call(token, field)) {
+        return (token as unknown as Record<string, unknown>)[field];
       }
 
       // Handle nested fields like rewardsByCategory.dining
