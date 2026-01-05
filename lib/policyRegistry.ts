@@ -121,6 +121,18 @@ export function updateRule(ruleId: string, updates: Partial<Rule>): void {
   currentPolicy.signatureHash = generateSignature(currentPolicy.rules);
 }
 
+export function toggleRule(ruleId: string): boolean {
+  const currentPolicy = registry.versions.find(v => v.version === registry.currentVersion);
+  if (!currentPolicy) return false;
+
+  const rule = currentPolicy.rules.find(r => r.id === ruleId);
+  if (!rule) return false;
+
+  rule.enabled = !rule.enabled;
+  currentPolicy.signatureHash = generateSignature(currentPolicy.rules);
+  return rule.enabled;
+}
+
 export function removeRule(ruleId: string): void {
   const currentPolicy = registry.versions.find(v => v.version === registry.currentVersion);
   if (!currentPolicy) return;

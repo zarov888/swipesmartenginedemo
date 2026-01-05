@@ -8,12 +8,15 @@ import PipelinePanel from '@/components/PipelinePanel';
 import TracePanel from '@/components/TracePanel';
 import RulesDock from '@/components/RulesDock';
 import DiffPanel from '@/components/DiffPanel';
+import DecisionFlow from '@/components/DecisionFlow';
+import ScoreChart from '@/components/ScoreChart';
+import GuidedTour, { TourTrigger } from '@/components/GuidedTour';
 
 import { TransactionContext, UserProfile, StageResult, TraceData, AuditRecord, LogEntry, DiffReport, RuleEvaluationResult, SensitivityResult, SelectionMethod } from '@/lib/types';
 import { STOPEngine, SpeedMode } from '@/lib/stopCore';
 import { generateSeed } from '@/lib/prng';
 import { sampleUser, scenarios, getDefaultContext } from '@/lib/mockData';
-import { getActivePolicy, isPolicyPinned } from '@/lib/policyRegistry';
+import { getActivePolicy, isPolicyPinned, toggleRule } from '@/lib/policyRegistry';
 import { computeSensitivity } from '@/lib/scoringEngine';
 
 export default function Home() {
@@ -28,6 +31,21 @@ export default function Home() {
   const [stageResults, setStageResults] = useState<StageResult[]>([]);
   const [rulesDockExpanded, setRulesDockExpanded] = useState(false);
   const [showDiff, setShowDiff] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'inputs' | 'pipeline' | 'results'>('pipeline');
+  const [showTour, setShowTour] = useState(false);
+
+  // Show tour on first visit
+  useEffect(() => {
+    const hasSeenTour = localStorage.getItem('swipesmart-tour-seen');
+    if (!hasSeenTour) {
+      setShowTour(true);
+    }
+  }, []);
+
+  const handleCloseTour = () => {
+    setShowTour(false);
+    localStorage.setItem('swipesmart-tour-seen', 'true');
+  };
 
   const [selectedScenario, setSelectedScenario] = useState('scenario_dining_domestic');
   const [context, setContext] = useState<TransactionContext>(() => {
@@ -159,8 +177,11 @@ export default function Home() {
     downloadJson(data, `stop-audit-${correlationId.slice(0, 8)}.json`);
   }, [auditRecord, correlationId]);
 
+  const [rulesVersion, setRulesVersion] = useState(0);
+
   const handleToggleRule = useCallback((ruleId: string) => {
-    console.log('Toggle rule:', ruleId);
+    toggleRule(ruleId);
+    setRulesVersion(v => v + 1); // Force re-render
   }, []);
 
   // Keyboard shortcuts
@@ -236,9 +257,27 @@ export default function Home() {
         onExportAudit={handleExportAudit}
       />
 
-      <div className="flex-1 flex overflow-hidden">
-        <div className="w-80 border-r border-gray-800 overflow-hidden flex flex-col">
-          <div className="panel-header px-3 py-2 border-b border-gray-800">
+      {/* Mobile Tab Bar */}
+      <div className="lg:hidden flex border-b border-gray-800 bg-void-light">
+        {(['inputs', 'pipeline', 'results'] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setMobileTab(tab)}
+            className={`flex-1 py-2 text-xs font-mono uppercase tracking-wider transition-colors ${
+              mobileTab === tab
+                ? 'text-neon-cyan border-b-2 border-neon-cyan bg-neon-cyan/5'
+                : 'text-gray-500 hover:text-gray-400'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        {/* Inputs Panel */}
+        <div className={`${mobileTab === 'inputs' ? 'flex' : 'hidden'} lg:flex w-full lg:w-80 border-r border-gray-800 overflow-hidden flex-col`}>
+          <div className="panel-header px-3 py-2 border-b border-gray-800 hidden lg:block">
             <span className="font-mono text-xs text-gray-500">INPUTS</span>
           </div>
           <div className="flex-1 overflow-hidden">
@@ -253,17 +292,46 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="flex-1 border-r border-gray-800 overflow-hidden flex flex-col">
-          <div className="panel-header px-3 py-2 border-b border-gray-800">
+        {/* Pipeline Panel */}
+        <div className={`${mobileTab === 'pipeline' ? 'flex' : 'hidden'} lg:flex flex-1 border-r border-gray-800 overflow-hidden flex-col`}>
+          <div className="panel-header px-3 py-2 border-b border-gray-800 hidden lg:block">
             <span className="font-mono text-xs text-gray-500">PIPELINE VISUALIZATION</span>
           </div>
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-3">
+            {/* Decision Flow Visualization */}
+            <AnimatePresence>
+              {auditRecord && (
+                <DecisionFlow
+                  isVisible={!!auditRecord}
+                  scores={auditRecord.scoreBreakdown}
+                  matchedRules={auditRecord.matchedRules}
+                  excludedTokens={auditRecord.excludedTokens}
+                  selectedTokenId={auditRecord.selectedRoute}
+                  selectedTokenName={auditRecord.selectedRouteName}
+                  isForced={auditRecord.hardRuleOverride}
+                  forcingRule={auditRecord.selectionMethod.type === 'FORCED' ? auditRecord.selectionMethod.ruleLabel : undefined}
+                />
+              )}
+            </AnimatePresence>
+
+            {/* Score Chart */}
+            {auditRecord && auditRecord.scoreBreakdown.length > 0 && (
+              <div className="mb-4">
+                <ScoreChart
+                  scores={auditRecord.scoreBreakdown}
+                  selectedTokenId={auditRecord.selectedRoute}
+                />
+              </div>
+            )}
+
+            {/* Pipeline Stages */}
             <PipelinePanel stageResults={stageResults} currentStageIndex={currentStageIndex} isRunning={isRunning} />
           </div>
         </div>
 
-        <div className="w-[420px] overflow-hidden flex flex-col">
-          <div className="panel-header px-3 py-2 border-b border-gray-800">
+        {/* Results Panel */}
+        <div className={`${mobileTab === 'results' ? 'flex' : 'hidden'} lg:flex w-full lg:w-[420px] overflow-hidden flex-col`}>
+          <div className="panel-header px-3 py-2 border-b border-gray-800 hidden lg:block">
             <span className="font-mono text-xs text-gray-500">TRACE + STATE INSPECTOR</span>
           </div>
           <div className="flex-1 overflow-hidden">
@@ -283,6 +351,10 @@ export default function Home() {
       <AnimatePresence>
         {showDiff && diff && <DiffPanel diff={diff} onClose={() => setShowDiff(false)} />}
       </AnimatePresence>
+
+      {/* Guided Tour */}
+      <GuidedTour isOpen={showTour} onClose={handleCloseTour} />
+      {!showTour && <TourTrigger onClick={() => setShowTour(true)} />}
     </div>
   );
 }
