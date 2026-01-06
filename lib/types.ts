@@ -193,7 +193,8 @@ export interface StageResult {
   endTime: number;
   startOffset: number;
   endOffset: number;
-  durationMs: number;
+  durationMs: number;           // Simulated production latency
+  actualDurationMs: number;     // Real wall-clock execution time
   inputs: Record<string, unknown>;
   outputs: Record<string, unknown>;
   logs: LogEntry[];

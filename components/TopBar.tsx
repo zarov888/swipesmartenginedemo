@@ -13,7 +13,8 @@ interface TopBarProps {
   policySignature: string;
   policyCacheHit: boolean;
   isPinned: boolean;
-  totalLatency: number;
+  simulatedLatency: number;
+  actualLatency: number;
   authResult: string;
   authProbability: number;
   selectedRoute: string;
@@ -33,7 +34,7 @@ interface TopBarProps {
 
 export default function TopBar({
   correlationId, seed, policyVersion, policySignature, policyCacheHit, isPinned,
-  totalLatency, authResult, authProbability, selectedRoute, selectionMethod,
+  simulatedLatency, actualLatency, authResult, authProbability, selectedRoute, selectionMethod,
   isRunning, isPaused, speedMode, onSpeedModeChange, onRun, onStep, onPause, onReplay, onNewSeed, onExportTrace, onExportAudit,
 }: TopBarProps) {
   const speedModes: SpeedMode[] = ['normal', 'fast', 'turbo'];
@@ -123,7 +124,8 @@ export default function TopBar({
         <Chip label="cache" value={policyCacheHit ? 'HIT' : 'MISS'} variant={policyCacheHit ? 'success' : 'default'} />
         <Chip label="sig" value={policySignature || '—'} mono />
         {isPinned && <Chip label="pinned" value="✓" variant="warning" />}
-        <Chip label="latency" value={`${totalLatency}ms`} variant={totalLatency > 400 ? 'warning' : 'default'} />
+        <Chip label="actual" value={`${actualLatency.toFixed(0)}ms`} variant={actualLatency > 100 ? 'warning' : 'success'} />
+        <Chip label="simulated" value={`${simulatedLatency}ms`} variant={simulatedLatency > 400 ? 'warning' : 'default'} />
         <Chip label="auth" value={authResult || '—'} variant={authResult === 'APPROVED' ? 'success' : authResult === 'DECLINED' ? 'error' : 'default'} />
         <Chip label="P(decline)" value={`${(authProbability * 100).toFixed(1)}%`} variant={authProbability > 0.3 ? 'warning' : 'default'} />
         <Chip label="route" value={selectedRoute.slice(0, 15) || '—'} variant="success" />

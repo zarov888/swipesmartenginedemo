@@ -85,28 +85,36 @@ export class STOPEngine {
     executor: () => Promise<{ inputs: Record<string, unknown>; outputs: Record<string, unknown>; status?: StageStatus }>,
     onComplete?: StageCallback
   ): Promise<StageResult> {
-    const duration = this.getLatency(name);
+    const duration = this.getLatency(name);  // Simulated production latency
     const startOffset = this.currentOffset;
     const endOffset = startOffset + duration;
     this.currentOffset = endOffset;
 
     this.stageLogs = [];
+
+    // Track actual wall-clock time
+    const actualStartTime = performance.now();
     await this.delay(duration);
 
     try {
       const result = await executor();
+      const actualEndTime = performance.now();
+      const actualDuration = actualEndTime - actualStartTime;
+
       const status = result.status || 'completed';
       const logs = this.stageLogs.filter(l => l.offsetMs >= startOffset && l.offsetMs <= endOffset);
-      
+
       const stageResult: StageResult = {
         stageName: name, stageIndex: index, status,
         startTime: this.pipelineStartTime + startOffset,
         endTime: this.pipelineStartTime + endOffset,
-        startOffset, endOffset, durationMs: duration,
+        startOffset, endOffset,
+        durationMs: duration,              // Simulated production latency
+        actualDurationMs: actualDuration,  // Real wall-clock time
         inputs: result.inputs, outputs: result.outputs,
         logs, errors: [],
       };
-      
+
       this.stageResults.push(stageResult);
       this.spans.push({
         spanId: `span_${this.prng.randomInt(10000, 99999)}`,
@@ -119,12 +127,17 @@ export class STOPEngine {
       if (onComplete) onComplete(stageResult, index);
       return stageResult;
     } catch (error) {
+      const actualEndTime = performance.now();
+      const actualDuration = actualEndTime - actualStartTime;
+
       const errMsg = error instanceof Error ? error.message : 'Unknown error';
       const stageResult: StageResult = {
         stageName: name, stageIndex: index, status: 'error',
         startTime: this.pipelineStartTime + startOffset,
         endTime: this.pipelineStartTime + endOffset,
-        startOffset, endOffset, durationMs: duration,
+        startOffset, endOffset,
+        durationMs: duration,
+        actualDurationMs: actualDuration,
         inputs: {}, outputs: {}, logs: this.stageLogs,
         errors: [{ code: 'STAGE_ERROR', message: errMsg }],
       };

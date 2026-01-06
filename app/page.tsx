@@ -63,7 +63,8 @@ export default function Home() {
   const [sensitivity, setSensitivity] = useState<SensitivityResult[]>([]);
 
   const policy = getActivePolicy();
-  const totalLatency = stageResults.reduce((sum, s) => sum + s.durationMs, 0);
+  const simulatedLatency = stageResults.reduce((sum, s) => sum + s.durationMs, 0);
+  const actualLatency = stageResults.reduce((sum, s) => sum + (s.actualDurationMs || 0), 0);
   const authResult = auditRecord?.authResult.approved ? 'APPROVED' : auditRecord?.authResult.approved === false ? 'DECLINED' : '';
   const selectedRoute = auditRecord?.selectedRouteName || '';
   const selectionMethod: SelectionMethod | null = auditRecord?.selectionMethod || null;
@@ -240,7 +241,8 @@ export default function Home() {
         policySignature={auditRecord?.policySignatureShort || ''}
         policyCacheHit={auditRecord?.policyCacheHit || false}
         isPinned={isPolicyPinned()}
-        totalLatency={totalLatency}
+        simulatedLatency={simulatedLatency}
+        actualLatency={actualLatency}
         authResult={authResult}
         authProbability={auditRecord?.declineProbability || 0}
         selectedRoute={selectedRoute}
