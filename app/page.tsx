@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import TopBar from '@/components/TopBar';
 import InputPanel from '@/components/InputPanel';
 import PipelinePanel from '@/components/PipelinePanel';
@@ -12,8 +12,12 @@ import DecisionFlow from '@/components/DecisionFlow';
 import ScoreChart from '@/components/ScoreChart';
 import GuidedTour, { TourTrigger } from '@/components/GuidedTour';
 import ScoringExplainer from '@/components/ScoringExplainer';
+import WeightSliders from '@/components/WeightSliders';
+import ConfidenceIndicator from '@/components/ConfidenceIndicator';
+import RuleImpact from '@/components/RuleImpact';
+import CostBenefitSummary from '@/components/CostBenefitSummary';
 
-import { TransactionContext, UserProfile, StageResult, TraceData, AuditRecord, LogEntry, DiffReport, RuleEvaluationResult, SensitivityResult, SelectionMethod } from '@/lib/types';
+import { TransactionContext, UserProfile, StageResult, TraceData, AuditRecord, LogEntry, DiffReport, RuleEvaluationResult, SensitivityResult, SelectionMethod, ScoringWeights } from '@/lib/types';
 import { STOPEngine, SpeedMode } from '@/lib/stopCore';
 import { generateSeed } from '@/lib/prng';
 import { sampleUser, scenarios, getDefaultContext } from '@/lib/mockData';
@@ -186,6 +190,26 @@ export default function Home() {
     setRulesVersion(v => v + 1); // Force re-render
   }, []);
 
+  // Handle weight changes - update user profile
+  const handleWeightChange = useCallback((newWeights: ScoringWeights) => {
+    setUser(prev => ({
+      ...prev,
+      preferenceWeights: newWeights,
+    }));
+  }, []);
+
+  // Get selected token for cost/benefit
+  const selectedToken = useMemo(() => {
+    if (!auditRecord) return undefined;
+    return user.tokens.find(t => t.id === auditRecord.selectedRoute) ||
+           user.drtTokens.find(t => t.id === auditRecord.selectedRoute);
+  }, [auditRecord, user]);
+
+  const selectedScore = useMemo(() => {
+    if (!auditRecord) return undefined;
+    return auditRecord.scoreBreakdown.find(s => s.tokenId === auditRecord.selectedRoute);
+  }, [auditRecord]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -279,11 +303,11 @@ export default function Home() {
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Inputs Panel */}
-        <div className={`${mobileTab === 'inputs' ? 'flex' : 'hidden'} lg:flex w-full lg:w-80 border-r border-gray-800 overflow-hidden flex-col`}>
-          <div className="panel-header px-3 py-2 border-b border-gray-800 hidden lg:block">
-            <span className="font-mono text-xs text-gray-500">INPUTS</span>
+        <div className={`${mobileTab === 'inputs' ? 'flex' : 'hidden'} lg:flex w-full lg:w-80 border-r border-white/5 overflow-hidden flex-col bg-surface-100/50`}>
+          <div className="panel-header px-4 py-3 border-b border-white/5 hidden lg:block bg-surface-50/50">
+            <span className="font-mono text-[10px] text-text-tertiary uppercase tracking-wider">Transaction Inputs</span>
           </div>
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
             <InputPanel
               context={context}
               user={user}
@@ -292,15 +316,64 @@ export default function Home() {
               onUserChange={setUser}
               onScenarioSelect={handleScenarioSelect}
             />
+            {/* Weight Sliders */}
+            <div className="p-3 border-t border-white/5">
+              <WeightSliders
+                weights={user.preferenceWeights}
+                onChange={handleWeightChange}
+                disabled={isRunning}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Pipeline Panel */}
-        <div className={`${mobileTab === 'pipeline' ? 'flex' : 'hidden'} lg:flex flex-1 border-r border-gray-800 overflow-hidden flex-col`}>
-          <div className="panel-header px-3 py-2 border-b border-gray-800 hidden lg:block">
-            <span className="font-mono text-xs text-gray-500">PIPELINE VISUALIZATION</span>
+        {/* Pipeline Panel - Main Content */}
+        <div className={`${mobileTab === 'pipeline' ? 'flex' : 'hidden'} lg:flex flex-1 border-r border-white/5 overflow-hidden flex-col`}>
+          <div className="panel-header px-4 py-3 border-b border-white/5 hidden lg:flex items-center justify-between bg-surface-50/50">
+            <span className="font-mono text-[10px] text-text-tertiary uppercase tracking-wider">Decision Engine Visualization</span>
+            {auditRecord && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center gap-2"
+              >
+                <span className="text-[10px] text-text-secondary">Result:</span>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                  auditRecord.authResult.approved
+                    ? 'bg-accent-green/10 text-accent-green border border-accent-green/20'
+                    : 'bg-error-red/10 text-error-red border border-error-red/20'
+                }`}>
+                  {auditRecord.authResult.approved ? 'APPROVED' : 'DECLINED'}
+                </span>
+              </motion.div>
+            )}
           </div>
-          <div className="flex-1 overflow-y-auto p-3">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* Empty State */}
+            {!auditRecord && !isRunning && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col items-center justify-center h-full text-center p-8"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-accent-blue/10 border border-accent-blue/20 flex items-center justify-center mb-4">
+                  <svg className="w-8 h-8 text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-white mb-2">Ready to Optimize</h3>
+                <p className="text-sm text-text-secondary mb-4 max-w-sm">
+                  Configure your transaction inputs and click <strong>Run</strong> to see the intelligent payment routing engine in action.
+                </p>
+                <button
+                  onClick={runPipeline}
+                  className="px-4 py-2 bg-accent-blue/20 hover:bg-accent-blue/30 border border-accent-blue/40 rounded-lg text-accent-blue font-medium text-sm transition-colors"
+                >
+                  Run Pipeline
+                </button>
+              </motion.div>
+            )}
+
             {/* Decision Flow Visualization */}
             <AnimatePresence>
               {auditRecord && (
@@ -317,35 +390,67 @@ export default function Home() {
               )}
             </AnimatePresence>
 
+            {/* Confidence Indicator */}
+            {auditRecord && auditRecord.scoreBreakdown.length >= 2 && (
+              <ConfidenceIndicator
+                scores={auditRecord.scoreBreakdown}
+                selectedTokenId={auditRecord.selectedRoute}
+              />
+            )}
+
             {/* Score Chart */}
             {auditRecord && auditRecord.scoreBreakdown.length > 0 && (
-              <div className="mb-4">
-                <ScoreChart
+              <ScoreChart
+                scores={auditRecord.scoreBreakdown}
+                selectedTokenId={auditRecord.selectedRoute}
+              />
+            )}
+
+            {/* Two Column Layout for Insights */}
+            {auditRecord && (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                {/* Rule Impact */}
+                <RuleImpact
+                  evaluations={ruleEvaluations}
                   scores={auditRecord.scoreBreakdown}
-                  selectedTokenId={auditRecord.selectedRoute}
                 />
+
+                {/* Cost/Benefit Summary */}
+                {selectedScore && (
+                  <CostBenefitSummary
+                    score={selectedScore}
+                    context={context}
+                    token={selectedToken}
+                  />
+                )}
               </div>
             )}
 
             {/* Scoring Explainer */}
             {auditRecord && auditRecord.scoreBreakdown.length > 0 && (
-              <div className="mb-4">
-                <ScoringExplainer
-                  scores={auditRecord.scoreBreakdown}
-                  selectedTokenId={auditRecord.selectedRoute}
-                />
-              </div>
+              <ScoringExplainer
+                scores={auditRecord.scoreBreakdown}
+                selectedTokenId={auditRecord.selectedRoute}
+              />
             )}
 
             {/* Pipeline Stages */}
-            <PipelinePanel stageResults={stageResults} currentStageIndex={currentStageIndex} isRunning={isRunning} />
+            {(isRunning || stageResults.length > 0) && (
+              <div className="mt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-1 h-4 bg-accent-blue rounded-full" />
+                  <span className="text-xs font-semibold text-white uppercase tracking-wider">Pipeline Stages</span>
+                </div>
+                <PipelinePanel stageResults={stageResults} currentStageIndex={currentStageIndex} isRunning={isRunning} />
+              </div>
+            )}
           </div>
         </div>
 
         {/* Results Panel */}
-        <div className={`${mobileTab === 'results' ? 'flex' : 'hidden'} lg:flex w-full lg:w-[420px] overflow-hidden flex-col`}>
-          <div className="panel-header px-3 py-2 border-b border-gray-800 hidden lg:block">
-            <span className="font-mono text-xs text-gray-500">TRACE + STATE INSPECTOR</span>
+        <div className={`${mobileTab === 'results' ? 'flex' : 'hidden'} lg:flex w-full lg:w-[400px] overflow-hidden flex-col bg-surface-100/50`}>
+          <div className="panel-header px-4 py-3 border-b border-white/5 hidden lg:block bg-surface-50/50">
+            <span className="font-mono text-[10px] text-text-tertiary uppercase tracking-wider">Trace Inspector</span>
           </div>
           <div className="flex-1 overflow-hidden">
             <TracePanel trace={trace} auditRecord={auditRecord} logs={logs} sensitivity={sensitivity} />
