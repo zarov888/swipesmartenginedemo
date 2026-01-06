@@ -30,12 +30,14 @@ interface TopBarProps {
   onNewSeed: () => void;
   onExportTrace: () => void;
   onExportAudit: () => void;
+  extraActions?: React.ReactNode;
 }
 
 export default function TopBar({
   correlationId, seed, policyVersion, policySignature, policyCacheHit, isPinned,
   simulatedLatency, actualLatency, authResult, authProbability, selectedRoute, selectionMethod,
   isRunning, isPaused, speedMode, onSpeedModeChange, onRun, onStep, onPause, onReplay, onNewSeed, onExportTrace, onExportAudit,
+  extraActions,
 }: TopBarProps) {
   const speedModes: SpeedMode[] = ['normal', 'fast', 'turbo'];
   const speedLabels: Record<SpeedMode, string> = { normal: '1x', fast: '4x', turbo: 'MAX' };
@@ -113,6 +115,12 @@ export default function TopBar({
           <Link href="/about" className="btn-primary px-2.5 py-1 rounded flex items-center gap-1 text-xs font-mono">
             <Info className="w-3.5 h-3.5" /> About
           </Link>
+          {extraActions && (
+            <>
+              <div className="w-px h-5 bg-gray-700 mx-1" />
+              {extraActions}
+            </>
+          )}
         </div>
       </div>
 

@@ -320,6 +320,7 @@ export interface Scenario {
   description: string;
   expectedOutcome: string;
   context: Partial<TransactionContext>;
+  icon?: string;
 }
 
 export const STAGE_NAMES = [

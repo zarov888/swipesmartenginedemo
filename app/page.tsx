@@ -16,6 +16,11 @@ import WeightSliders from '@/components/WeightSliders';
 import ConfidenceIndicator from '@/components/ConfidenceIndicator';
 import RuleImpact from '@/components/RuleImpact';
 import CostBenefitSummary from '@/components/CostBenefitSummary';
+import ShadowWinnerBanner from '@/components/ShadowWinnerBanner';
+import SensitivityAlerts from '@/components/SensitivityAlerts';
+import ShareState, { useSharedState } from '@/components/ShareState';
+import ExportReport from '@/components/ExportReport';
+import { PipelineSkeleton } from '@/components/SkeletonLoader';
 
 import { TransactionContext, UserProfile, StageResult, TraceData, AuditRecord, LogEntry, DiffReport, RuleEvaluationResult, SensitivityResult, SelectionMethod, ScoringWeights } from '@/lib/types';
 import { STOPEngine, SpeedMode } from '@/lib/stopCore';
@@ -38,6 +43,17 @@ export default function Home() {
   const [showDiff, setShowDiff] = useState(false);
   const [mobileTab, setMobileTab] = useState<'inputs' | 'pipeline' | 'results'>('pipeline');
   const [showTour, setShowTour] = useState(false);
+
+  // Load shared state from URL
+  const sharedState = useSharedState();
+  useEffect(() => {
+    if (sharedState) {
+      if (sharedState.seed) setSeed(sharedState.seed);
+      if (sharedState.scenario) setSelectedScenario(sharedState.scenario);
+      if (sharedState.context) setContext(prev => ({ ...prev, ...sharedState.context }));
+      if (sharedState.weights) setUser(prev => ({ ...prev, preferenceWeights: sharedState.weights! }));
+    }
+  }, [sharedState]);
 
   // Show tour on first visit
   useEffect(() => {
@@ -282,6 +298,17 @@ export default function Home() {
         onNewSeed={handleNewSeed}
         onExportTrace={handleExportTrace}
         onExportAudit={handleExportAudit}
+        extraActions={
+          <>
+            <ShareState
+              context={context}
+              weights={user.preferenceWeights}
+              seed={seed}
+              scenario={selectedScenario}
+            />
+            <ExportReport auditRecord={auditRecord} context={context} />
+          </>
+        }
       />
 
       {/* Mobile Tab Bar */}
@@ -374,6 +401,16 @@ export default function Home() {
               </motion.div>
             )}
 
+            {/* Loading Skeleton */}
+            {isRunning && stageResults.length === 0 && (
+              <PipelineSkeleton />
+            )}
+
+            {/* Shadow Winner Banner - when rule overrides optimizer */}
+            {auditRecord?.shadowOptimization && (
+              <ShadowWinnerBanner shadow={auditRecord.shadowOptimization} />
+            )}
+
             {/* Decision Flow Visualization */}
             <AnimatePresence>
               {auditRecord && (
@@ -431,6 +468,14 @@ export default function Home() {
               <ScoringExplainer
                 scores={auditRecord.scoreBreakdown}
                 selectedTokenId={auditRecord.selectedRoute}
+              />
+            )}
+
+            {/* Sensitivity Alerts */}
+            {auditRecord && sensitivity.length > 0 && (
+              <SensitivityAlerts
+                sensitivity={sensitivity}
+                currentWinnerName={auditRecord.selectedRouteName}
               />
             )}
 
