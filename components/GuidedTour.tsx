@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronRight, ChevronLeft, Zap, Play, Sliders, BarChart3, Shield, FileJson } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Zap, Play, Sliders, BarChart3, Shield, FileJson, Rocket, Sparkles } from 'lucide-react';
 
 interface TourStep {
   target: string;
@@ -10,15 +10,17 @@ interface TourStep {
   description: string;
   icon: typeof Zap;
   position: 'top' | 'bottom' | 'left' | 'right';
+  action?: 'run-demo';
 }
 
 const tourSteps: TourStep[] = [
   {
     target: 'welcome',
     title: 'Welcome to SwipeSmart',
-    description: 'This demo shows how intelligent payment routing works. We\'ll walk you through the key features.',
+    description: 'Experience intelligent payment routing that optimizes every transaction. Ready to see it in action?',
     icon: Zap,
     position: 'bottom',
+    action: 'run-demo',
   },
   {
     target: 'run-button',
@@ -60,14 +62,28 @@ const tourSteps: TourStep[] = [
 interface GuidedTourProps {
   isOpen: boolean;
   onClose: () => void;
+  onRunDemo?: () => void;
 }
 
-export default function GuidedTour({ isOpen, onClose }: GuidedTourProps) {
+export default function GuidedTour({ isOpen, onClose, onRunDemo }: GuidedTourProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [demoRunning, setDemoRunning] = useState(false);
 
   const step = tourSteps[currentStep];
   const isFirst = currentStep === 0;
   const isLast = currentStep === tourSteps.length - 1;
+
+  const handleRunDemo = async () => {
+    if (onRunDemo) {
+      setDemoRunning(true);
+      onRunDemo();
+      // Close tour and let them see the demo
+      setTimeout(() => {
+        onClose();
+        setDemoRunning(false);
+      }, 500);
+    }
+  };
 
   const handleNext = () => {
     if (isLast) {
@@ -144,6 +160,35 @@ export default function GuidedTour({ isOpen, onClose }: GuidedTourProps) {
               {/* Content */}
               <div className="p-6">
                 <p className="text-gray-300 leading-relaxed">{step.description}</p>
+
+                {/* Auto-run Demo Button on first step */}
+                {step.action === 'run-demo' && onRunDemo && (
+                  <motion.button
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    onClick={handleRunDemo}
+                    disabled={demoRunning}
+                    className="w-full mt-4 py-3 rounded-lg bg-gradient-to-r from-accent-green/20 to-accent-teal/20 border border-accent-green/30 text-accent-green hover:from-accent-green/30 hover:to-accent-teal/30 transition-all flex items-center justify-center gap-2 font-medium"
+                  >
+                    {demoRunning ? (
+                      <>
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                        >
+                          <Sparkles className="w-5 h-5" />
+                        </motion.div>
+                        Running Demo...
+                      </>
+                    ) : (
+                      <>
+                        <Rocket className="w-5 h-5" />
+                        Run Demo Now
+                      </>
+                    )}
+                  </motion.button>
+                )}
 
                 {/* Progress dots */}
                 <div className="flex justify-center gap-2 mt-6">

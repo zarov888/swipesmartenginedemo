@@ -20,6 +20,9 @@ import ShadowWinnerBanner from '@/components/ShadowWinnerBanner';
 import SensitivityAlerts from '@/components/SensitivityAlerts';
 import ShareState, { useSharedState } from '@/components/ShareState';
 import ExportReport from '@/components/ExportReport';
+import ScenarioComparison from '@/components/ScenarioComparison';
+import TokenCardGallery from '@/components/TokenCardGallery';
+import RewardsTracker from '@/components/RewardsTracker';
 import { PipelineSkeleton } from '@/components/SkeletonLoader';
 
 import { TransactionContext, UserProfile, StageResult, TraceData, AuditRecord, LogEntry, DiffReport, RuleEvaluationResult, SensitivityResult, SelectionMethod, ScoringWeights } from '@/lib/types';
@@ -81,6 +84,7 @@ export default function Home() {
   const [diff, setDiff] = useState<DiffReport | null>(null);
   const [ruleEvaluations, setRuleEvaluations] = useState<RuleEvaluationResult[]>([]);
   const [sensitivity, setSensitivity] = useState<SensitivityResult[]>([]);
+  const [transactionCount, setTransactionCount] = useState(0);
 
   const policy = getActivePolicy();
   const simulatedLatency = stageResults.reduce((sum, s) => sum + s.durationMs, 0);
@@ -142,6 +146,9 @@ export default function Home() {
         const sens = computeSensitivity(result.scoringResult.scores, result.scoringResult.weightsUsed, 0.10);
         setSensitivity(sens);
       }
+
+      // Increment transaction count for rewards tracking
+      setTransactionCount(prev => prev + 1);
 
       // Compute diff
       if (previousRun && previousRun.selectedRoute !== result.auditRecord.selectedRoute) {
@@ -226,6 +233,26 @@ export default function Home() {
     return auditRecord.scoreBreakdown.find(s => s.tokenId === auditRecord.selectedRoute);
   }, [auditRecord]);
 
+  // Run comparison for a specific scenario
+  const runScenarioComparison = useCallback(async (scenarioId: string) => {
+    const scenario = scenarios.find(s => s.id === scenarioId);
+    if (!scenario) return null;
+
+    const testContext = { ...context, ...scenario.context };
+    const engine = new STOPEngine(seed, 'turbo');
+
+    try {
+      const result = await engine.runPipeline(testContext, user, () => {});
+      const activeScores = result.scoringResult.scores.filter(s => !s.excluded).sort((a, b) => b.finalScore - a.finalScore);
+      return {
+        winner: activeScores[0],
+        runnerUp: activeScores[1] || null,
+      };
+    } catch {
+      return null;
+    }
+  }, [context, user, seed]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -300,6 +327,10 @@ export default function Home() {
         onExportAudit={handleExportAudit}
         extraActions={
           <>
+            <ScenarioComparison
+              currentScenario={selectedScenario}
+              onRunComparison={runScenarioComparison}
+            />
             <ShareState
               context={context}
               weights={user.preferenceWeights}
@@ -471,6 +502,26 @@ export default function Home() {
               />
             )}
 
+            {/* Two Column Layout for Wallet & Rewards */}
+            {auditRecord && (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                {/* Token Card Gallery */}
+                <TokenCardGallery
+                  tokens={[...user.tokens, ...user.drtTokens]}
+                  scores={auditRecord.scoreBreakdown}
+                  selectedTokenId={auditRecord.selectedRoute}
+                />
+
+                {/* Rewards Tracker */}
+                <RewardsTracker
+                  scores={auditRecord.scoreBreakdown}
+                  selectedTokenId={auditRecord.selectedRoute}
+                  context={context}
+                  transactionCount={transactionCount}
+                />
+              </div>
+            )}
+
             {/* Sensitivity Alerts */}
             {auditRecord && sensitivity.length > 0 && (
               <SensitivityAlerts
@@ -516,7 +567,7 @@ export default function Home() {
       </AnimatePresence>
 
       {/* Guided Tour */}
-      <GuidedTour isOpen={showTour} onClose={handleCloseTour} />
+      <GuidedTour isOpen={showTour} onClose={handleCloseTour} onRunDemo={runPipeline} />
       {!showTour && <TourTrigger onClick={() => setShowTour(true)} />}
     </div>
   );
