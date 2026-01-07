@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
+import { BarChart2 } from 'lucide-react';
 import TopBar from '@/components/TopBar';
 import InputPanel from '@/components/InputPanel';
 import PipelinePanel from '@/components/PipelinePanel';
@@ -377,6 +379,13 @@ export default function Home() {
             />
             <ExportReport auditRecord={auditRecord} context={context} />
             <KeyboardShortcutsTrigger onClick={() => setShowKeyboardShortcuts(true)} />
+            <Link
+              href="/analytics"
+              className="p-1.5 rounded hover:bg-white/5 transition-colors group"
+              title="Wallet Analytics"
+            >
+              <BarChart2 className="w-4 h-4 text-text-tertiary group-hover:text-accent-purple transition-colors" />
+            </Link>
           </>
         }
       />

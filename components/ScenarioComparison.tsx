@@ -88,12 +88,14 @@ export default function ScenarioComparison({ currentScenario, onRunComparison }:
 
       <AnimatePresence>
         {showModal && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          >
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setShowModal(false)}
             />
 
@@ -101,7 +103,7 @@ export default function ScenarioComparison({ currentScenario, onRunComparison }:
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[80vh] bg-surface-50 rounded-2xl border border-white/10 shadow-2xl z-50 overflow-hidden flex flex-col"
+              className="relative w-full max-w-2xl max-h-[80vh] bg-surface-50 rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col"
             >
               {/* Header */}
               <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between flex-shrink-0">
@@ -234,7 +236,7 @@ export default function ScenarioComparison({ currentScenario, onRunComparison }:
                 )}
               </div>
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
     </>
