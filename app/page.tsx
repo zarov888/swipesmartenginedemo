@@ -24,6 +24,16 @@ import ScenarioComparison from '@/components/ScenarioComparison';
 import TokenCardGallery from '@/components/TokenCardGallery';
 import RewardsTracker from '@/components/RewardsTracker';
 import { PipelineSkeleton } from '@/components/SkeletonLoader';
+import KeyboardShortcuts, { KeyboardShortcutsTrigger } from '@/components/KeyboardShortcuts';
+import ABComparison from '@/components/ABComparison';
+import RunHistory, { useRunHistory } from '@/components/RunHistory';
+import RuleBuilder, { RuleBuilderTrigger } from '@/components/RuleBuilder';
+import CardRecommendation from '@/components/CardRecommendation';
+import MCCInsights from '@/components/MCCInsights';
+import CreditImpactSimulator from '@/components/CreditImpactSimulator';
+import SpendingHeatmap from '@/components/SpendingHeatmap';
+import PerformanceProfiler from '@/components/PerformanceProfiler';
+import RuleDebugger from '@/components/RuleDebugger';
 
 import { TransactionContext, UserProfile, StageResult, TraceData, AuditRecord, LogEntry, DiffReport, RuleEvaluationResult, SensitivityResult, SelectionMethod, ScoringWeights } from '@/lib/types';
 import { STOPEngine, SpeedMode } from '@/lib/stopCore';
@@ -46,6 +56,11 @@ export default function Home() {
   const [showDiff, setShowDiff] = useState(false);
   const [mobileTab, setMobileTab] = useState<'inputs' | 'pipeline' | 'results'>('pipeline');
   const [showTour, setShowTour] = useState(false);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [showRuleBuilder, setShowRuleBuilder] = useState(false);
+
+  // Run history hook
+  const { history, addEntry, clearHistory } = useRunHistory();
 
   // Load shared state from URL
   const sharedState = useSharedState();
@@ -149,6 +164,9 @@ export default function Home() {
 
       // Increment transaction count for rewards tracking
       setTransactionCount(prev => prev + 1);
+
+      // Add to run history
+      addEntry(result.auditRecord, context, selectedScenario, simulatedLatency);
 
       // Compute diff
       if (previousRun && previousRun.selectedRoute !== result.auditRecord.selectedRoute) {
@@ -292,12 +310,23 @@ export default function Home() {
         case 'a':
           handleExportAudit();
           break;
+        case '?':
+          e.preventDefault();
+          setShowKeyboardShortcuts(prev => !prev);
+          break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isRunning, runPipeline, handleReplay, handleNewSeed, handleExportTrace, handleExportAudit]);
+
+  // Handle replay from history
+  const handleHistoryReplay = useCallback((entry: { context: TransactionContext; scenario: string }) => {
+    setContext(entry.context);
+    setSelectedScenario(entry.scenario);
+    setTimeout(() => runPipeline(), 100);
+  }, [runPipeline]);
 
   return (
     <div className="h-screen flex flex-col bg-void grid-bg overflow-hidden">
@@ -327,9 +356,25 @@ export default function Home() {
         onExportAudit={handleExportAudit}
         extraActions={
           <>
+            <ABComparison
+              baseWeights={user.preferenceWeights}
+              context={context}
+              user={user}
+              seed={seed}
+            />
             <ScenarioComparison
               currentScenario={selectedScenario}
               onRunComparison={runScenarioComparison}
+            />
+            <MCCInsights
+              tokens={[...user.tokens, ...user.drtTokens]}
+              currentMCC={String(context.mcc)}
+            />
+            <RuleBuilderTrigger onClick={() => setShowRuleBuilder(true)} />
+            <RunHistory
+              history={history}
+              onReplay={handleHistoryReplay}
+              onClear={clearHistory}
             />
             <ShareState
               context={context}
@@ -338,6 +383,7 @@ export default function Home() {
               scenario={selectedScenario}
             />
             <ExportReport auditRecord={auditRecord} context={context} />
+            <KeyboardShortcutsTrigger onClick={() => setShowKeyboardShortcuts(true)} />
           </>
         }
       />
@@ -530,6 +576,50 @@ export default function Home() {
               />
             )}
 
+            {/* Card Recommendations */}
+            {auditRecord && (
+              <CardRecommendation
+                scores={auditRecord.scoreBreakdown}
+                context={context}
+                userTokens={[...user.tokens, ...user.drtTokens]}
+              />
+            )}
+
+            {/* Advanced Analytics Grid */}
+            {auditRecord && (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                {/* Credit Impact Simulator */}
+                <CreditImpactSimulator
+                  tokens={[...user.tokens, ...user.drtTokens]}
+                  selectedTokenId={auditRecord.selectedRoute}
+                  context={context}
+                />
+
+                {/* Spending Heatmap */}
+                <SpendingHeatmap />
+              </div>
+            )}
+
+            {/* Developer Tools Grid */}
+            {(auditRecord || stageResults.length > 0) && (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                {/* Performance Profiler */}
+                <PerformanceProfiler
+                  stageResults={stageResults}
+                  isRunning={isRunning}
+                />
+
+                {/* Rule Debugger */}
+                {auditRecord && (
+                  <RuleDebugger
+                    evaluations={ruleEvaluations}
+                    context={context}
+                    tokens={[...user.tokens, ...user.drtTokens]}
+                  />
+                )}
+              </div>
+            )}
+
             {/* Pipeline Stages */}
             {(isRunning || stageResults.length > 0) && (
               <div className="mt-4">
@@ -569,6 +659,19 @@ export default function Home() {
       {/* Guided Tour */}
       <GuidedTour isOpen={showTour} onClose={handleCloseTour} onRunDemo={runPipeline} />
       {!showTour && <TourTrigger onClick={() => setShowTour(true)} />}
+
+      {/* Keyboard Shortcuts Modal */}
+      <KeyboardShortcuts
+        isOpen={showKeyboardShortcuts}
+        onClose={() => setShowKeyboardShortcuts(false)}
+      />
+
+      {/* Rule Builder Modal */}
+      <RuleBuilder
+        isOpen={showRuleBuilder}
+        onClose={() => setShowRuleBuilder(false)}
+        onApplyRules={() => {}}
+      />
     </div>
   );
 }
