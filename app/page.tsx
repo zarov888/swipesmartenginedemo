@@ -21,19 +21,12 @@ import SensitivityAlerts from '@/components/SensitivityAlerts';
 import ShareState, { useSharedState } from '@/components/ShareState';
 import ExportReport from '@/components/ExportReport';
 import ScenarioComparison from '@/components/ScenarioComparison';
-import TokenCardGallery from '@/components/TokenCardGallery';
-import RewardsTracker from '@/components/RewardsTracker';
 import { PipelineSkeleton } from '@/components/SkeletonLoader';
 import KeyboardShortcuts, { KeyboardShortcutsTrigger } from '@/components/KeyboardShortcuts';
 import ABComparison from '@/components/ABComparison';
 import RunHistory, { useRunHistory } from '@/components/RunHistory';
 import RuleBuilder, { RuleBuilderTrigger } from '@/components/RuleBuilder';
-import CardRecommendation from '@/components/CardRecommendation';
 import MCCInsights from '@/components/MCCInsights';
-import CreditImpactSimulator from '@/components/CreditImpactSimulator';
-import SpendingHeatmap from '@/components/SpendingHeatmap';
-import PerformanceProfiler from '@/components/PerformanceProfiler';
-import RuleDebugger from '@/components/RuleDebugger';
 
 import { TransactionContext, UserProfile, StageResult, TraceData, AuditRecord, LogEntry, DiffReport, RuleEvaluationResult, SensitivityResult, SelectionMethod, ScoringWeights } from '@/lib/types';
 import { STOPEngine, SpeedMode } from '@/lib/stopCore';
@@ -548,76 +541,12 @@ export default function Home() {
               />
             )}
 
-            {/* Two Column Layout for Wallet & Rewards */}
-            {auditRecord && (
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                {/* Token Card Gallery */}
-                <TokenCardGallery
-                  tokens={[...user.tokens, ...user.drtTokens]}
-                  scores={auditRecord.scoreBreakdown}
-                  selectedTokenId={auditRecord.selectedRoute}
-                />
-
-                {/* Rewards Tracker */}
-                <RewardsTracker
-                  scores={auditRecord.scoreBreakdown}
-                  selectedTokenId={auditRecord.selectedRoute}
-                  context={context}
-                  transactionCount={transactionCount}
-                />
-              </div>
-            )}
-
             {/* Sensitivity Alerts */}
             {auditRecord && sensitivity.length > 0 && (
               <SensitivityAlerts
                 sensitivity={sensitivity}
                 currentWinnerName={auditRecord.selectedRouteName}
               />
-            )}
-
-            {/* Card Recommendations */}
-            {auditRecord && (
-              <CardRecommendation
-                scores={auditRecord.scoreBreakdown}
-                context={context}
-                userTokens={[...user.tokens, ...user.drtTokens]}
-              />
-            )}
-
-            {/* Advanced Analytics Grid */}
-            {auditRecord && (
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                {/* Credit Impact Simulator */}
-                <CreditImpactSimulator
-                  tokens={[...user.tokens, ...user.drtTokens]}
-                  selectedTokenId={auditRecord.selectedRoute}
-                  context={context}
-                />
-
-                {/* Spending Heatmap */}
-                <SpendingHeatmap />
-              </div>
-            )}
-
-            {/* Developer Tools Grid */}
-            {(auditRecord || stageResults.length > 0) && (
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                {/* Performance Profiler */}
-                <PerformanceProfiler
-                  stageResults={stageResults}
-                  isRunning={isRunning}
-                />
-
-                {/* Rule Debugger */}
-                {auditRecord && (
-                  <RuleDebugger
-                    evaluations={ruleEvaluations}
-                    context={context}
-                    tokens={[...user.tokens, ...user.drtTokens]}
-                  />
-                )}
-              </div>
             )}
 
             {/* Pipeline Stages */}
